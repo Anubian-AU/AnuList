@@ -63,5 +63,14 @@ def test_cross_household_isolation():
     assert client.post("/api/auth/login",json={"email":"other@example.test","password":"other-password-1234"}).status_code == 200
     assert mutate("POST", "/api/lists/" + client.get("/api/lists").json()[0]["id"] + "/entries", {"name":"Private"}).status_code == 200
     with transaction() as db:
-        чужой = db.execute("SELECT id FROM lists WHERE name='Shopping'").fetchone()["id"]
+        foreign_id = db.execute("SELECT id FROM lists WHERE name='Shopping'").fetchone()["id"]
     assert client.get(f"/api/lists/{чужой}/entries").status_code == 404
+
+
+def test_invitation_signup():
+    client.post("/api/auth/login",json={"email":"owner@example.test","password":"test-password-1234"})
+    code = mutate("POST", "/api/household/invite").json()["code"]
+    data={"email":"partner@example.test","name":"Partner","password":"partner-password-1234","invitation":code}
+    assert client.post("/api/auth/register",json=data).status_code == 200
+    assert client.get("/api/auth/me").json()["role"] == "member"
+    assert client.post("/api/auth/register",json={**data,"email":"replay@example.test"}).status_code == 400

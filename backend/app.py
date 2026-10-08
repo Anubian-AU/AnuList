@@ -27,6 +27,7 @@ async def headers(request, call_next):
     result.headers["X-Content-Type-Options"] = "nosniff"
     result.headers["Referrer-Policy"] = "no-referrer"
     result.headers["X-Frame-Options"] = "DENY"
+    result.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
     if request.url.path.startswith("/api/"):
         result.headers["Cache-Control"] = "no-store"
     return result

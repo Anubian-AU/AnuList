@@ -33,6 +33,9 @@ def init():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     MEDIA_PATH.mkdir(parents=True, exist_ok=True)
     with transaction() as db:
+        version = db.execute("PRAGMA user_version").fetchone()[0]
+        if version not in (0, 1):
+            raise RuntimeError("Unsupported AnuList schema version; migration required")
         db.execute("PRAGMA journal_mode=WAL")
         db.executescript("""
 CREATE TABLE IF NOT EXISTS users(
@@ -86,7 +89,8 @@ CREATE TABLE IF NOT EXISTS price_observations(
  id TEXT PRIMARY KEY, product_id TEXT NOT NULL REFERENCES retailer_products(id),
  price_cents INTEGER NOT NULL, observed_at TEXT NOT NULL, region TEXT NOT NULL DEFAULT '',
  source TEXT NOT NULL, promotion TEXT NOT NULL DEFAULT '', valid_until TEXT);
-PRAGMA user_version=1;
 """)
+        if version == 0:
+            db.execute("PRAGMA user_version=1")
     if os.name != "nt":
         os.chmod(DB_PATH.parent, 0o750)

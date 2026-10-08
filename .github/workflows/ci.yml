@@ -27,3 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -f backend/Dockerfile -t anulist:test .
+      - name: Boot and health-test the container
+        run: |
+          set -euo pipefail
+          scratch=$(mktemp -d)
+          sudo chown 10001:10001 "$scratch"
+          docker run -d --name anulist-smoke -e COOKIE_SECURE=false -v "$scratch:/data" -p 127.0.0.1:8765:8000 anulist:test
+          trap 'docker rm -f anulist-smoke >/dev/null 2>&1 || true; sudo rm -rf "$scratch"' EXIT
+          for i in {1..25}; do
+            if curl -fsS http://127.0.0.1:8765/api/health; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8765/
+          docker exec anulist-smoke python -c "import sqlite3; assert sqlite3.connect('/data/anulist.db').execute('PRAGMA user_version').fetchone()[0] == 1"
