@@ -64,7 +64,7 @@ def test_cross_household_isolation():
     assert mutate("POST", "/api/lists/" + client.get("/api/lists").json()[0]["id"] + "/entries", {"name":"Private"}).status_code == 200
     with transaction() as db:
         foreign_id = db.execute("SELECT id FROM lists WHERE name='Shopping'").fetchone()["id"]
-    assert client.get(f"/api/lists/{чужой}/entries").status_code == 404
+    assert client.get(f"/api/lists/{foreign_id}/entries").status_code == 404
 
 
 def test_invitation_signup():
