@@ -1,11 +1,12 @@
 FROM python:3.12-slim
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/app/backend:/app/scripts
 WORKDIR /app
 COPY backend/requirements.txt /app/backend/requirements.txt
 RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 COPY backend/ /app/backend/
 COPY frontend/ /app/frontend/
-RUN useradd --system --uid 10001 --home /app anulist
+COPY scripts/ /app/scripts/
+RUN groupadd --gid 10001 anulist && useradd --system --uid 10001 --gid 10001 --home /app anulist
 USER 10001
 WORKDIR /app/backend
 EXPOSE 8000
